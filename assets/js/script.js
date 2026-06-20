@@ -113,5 +113,42 @@ document.querySelectorAll('[data-reveal]').forEach(el => {
   revealObserver.observe(el);
 });
 
+// ── Testimonial Carousel ───────────────────────────────────────────
+const carousel = document.querySelector('[data-testimonial-carousel]');
+
+if (carousel) {
+  const slides = Array.from(carousel.querySelectorAll('.testimonial-slide'));
+  const dots   = Array.from(document.querySelectorAll('.testimonial-dot'));
+  let current  = 0;
+  let timer;
+
+  const goTo = (index) => {
+    slides[current].classList.remove('active');
+    slides[current].classList.add('leaving');
+    setTimeout(() => slides[current < slides.length ? current : 0].classList.remove('leaving'), 650);
+
+    current = index;
+    slides[current].classList.add('active');
+
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  };
+
+  const next = () => goTo((current + 1) % slides.length);
+
+  const startTimer = () => {
+    clearInterval(timer);
+    timer = setInterval(next, 5000);
+  };
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      goTo(parseInt(dot.dataset.index, 10));
+      startTimer();
+    });
+  });
+
+  startTimer();
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 onScroll();
