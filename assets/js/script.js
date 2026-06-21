@@ -1,154 +1,190 @@
 'use strict';
 
 // ── Mobile Navigation ──────────────────────────────────────────────
-const navToggle  = document.querySelector('[data-nav-toggle]');
-const navClose   = document.querySelector('[data-nav-close]');
-const mobileNav  = document.querySelector('[data-mobile-nav]');
-const overlay    = document.querySelector('[data-overlay]');
+const hamburger = document.getElementById('hamburger');
+const mobileNav = document.getElementById('mobile-nav');
+const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+const mobileNavClose = document.getElementById('mobile-nav-close');
 
-const openNav = () => {
-  mobileNav.classList.add('active');
-  overlay.classList.add('active');
+function openMobileNav() {
+  mobileNav.classList.add('open');
+  mobileNavOverlay.classList.add('show');
   document.body.style.overflow = 'hidden';
-};
+}
 
-const closeNav = () => {
-  mobileNav.classList.remove('active');
-  overlay.classList.remove('active');
+function closeMobileNav() {
+  mobileNav.classList.remove('open');
+  mobileNavOverlay.classList.remove('show');
   document.body.style.overflow = '';
-};
+}
 
-navToggle?.addEventListener('click', openNav);
-navClose?.addEventListener('click', closeNav);
-overlay?.addEventListener('click', closeNav);
+if (hamburger) hamburger.addEventListener('click', openMobileNav);
+if (mobileNavClose) mobileNavClose.addEventListener('click', closeMobileNav);
+if (mobileNavOverlay) mobileNavOverlay.addEventListener('click', closeMobileNav);
 
-mobileNav?.querySelectorAll('.navbar-link').forEach(link => {
-  link.addEventListener('click', closeNav);
-});
+// ── Header Scroll ──────────────────────────────────────────────────
+const header = document.getElementById('site-header');
+const backToTop = document.getElementById('back-to-top');
 
-// ── Header & Back-to-Top ───────────────────────────────────────────
-const header     = document.querySelector('[data-header]');
-const backTopBtn = document.querySelector('[data-back-top-btn]');
+function onScroll() {
+  const scrollY = window.scrollY;
 
-const sections  = document.querySelectorAll('section[id]');
-const navLinks  = document.querySelectorAll('.navbar-link');
+  if (header) {
+    header.classList.toggle('scrolled', scrollY > 80);
+  }
 
-const highlightNav = (scrollY) => {
-  const offset = scrollY + 130;
+  if (backToTop) {
+    backToTop.classList.toggle('visible', scrollY > 300);
+  }
+
+  updateActiveNav();
+}
+
+window.addEventListener('scroll', onScroll, { passive: true });
+
+// ── Active Nav on Scroll ───────────────────────────────────────────
+function updateActiveNav() {
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  let current = '';
+
   sections.forEach(section => {
-    const top    = section.offsetTop;
-    const height = section.offsetHeight;
-    const id     = section.id;
-    if (offset >= top && offset < top + height) {
-      navLinks.forEach(link => {
-        link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-      });
+    const top = section.getBoundingClientRect().top;
+    if (top <= 140) current = section.getAttribute('id');
+  });
+
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === `#${current}`) {
+      link.classList.add('active');
     }
   });
-};
+}
 
-const onScroll = () => {
-  const y = window.scrollY;
-  header?.classList.toggle('scrolled', y > 80);
-  backTopBtn?.classList.toggle('active', y > 400);
-  highlightNav(y);
-};
-
-// rAF-throttled scroll listener
-let rafPending = false;
-window.addEventListener('scroll', () => {
-  if (!rafPending) {
-    rafPending = true;
-    requestAnimationFrame(() => {
-      onScroll();
-      rafPending = false;
-    });
-  }
-}, { passive: true });
-
-backTopBtn?.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-// ── Smooth Scroll for Anchor Links ────────────────────────────────
+// ── Smooth Scroll ──────────────────────────────────────────────────
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
     const href = this.getAttribute('href');
-    if (!href || href === '#') return;
+    if (href === '#') return;
     const target = document.querySelector(href);
     if (!target) return;
     e.preventDefault();
-    const offset = header?.offsetHeight ?? 76;
-    window.scrollTo({
-      top: target.offsetTop - offset,
-      behavior: 'smooth'
+    const headerHeight = header ? header.offsetHeight : 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerHeight;
+    window.scrollTo({ top, behavior: 'smooth' });
+  });
+});
+
+// ── Back to Top ────────────────────────────────────────────────────
+if (backToTop) {
+  backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+// ── Intersection Observer — Scroll Reveal ─────────────────────────
+const revealEls = document.querySelectorAll('[data-reveal]');
+if (revealEls.length) {
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        revealObserver.unobserve(entry.target);
+      }
     });
-  });
-});
+  }, { threshold: 0.1 });
+  revealEls.forEach(el => revealObserver.observe(el));
+}
 
-// ── Scroll Reveal ──────────────────────────────────────────────────
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
+// ── Count-Up Animation ─────────────────────────────────────────────
+function countUp(el, target, duration) {
+  const start = performance.now();
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(eased * target);
+    if (progress < 1) requestAnimationFrame(update);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(update);
+}
 
-    // Stagger cards that share a parent grid
-    const siblings = Array.from(
-      entry.target.parentElement?.querySelectorAll('[data-reveal]') ?? []
-    );
-    const idx   = siblings.indexOf(entry.target);
-    const delay = idx >= 0 ? idx * 90 : 0;
+const brandStrip = document.querySelector('.brand-strip');
+if (brandStrip) {
+  let counted = false;
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !counted) {
+        counted = true;
+        brandStrip.querySelectorAll('.stat-number[data-target]').forEach(el => {
+          countUp(el, parseInt(el.dataset.target, 10), 1400);
+        });
+        statObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statObserver.observe(brandStrip);
+}
 
-    setTimeout(() => {
-      entry.target.classList.add('revealed');
-    }, delay);
+// ── Hero Video Parallax ────────────────────────────────────────────
+const heroVideo = document.querySelector('.hero-video');
+if (heroVideo) {
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrolled = window.scrollY;
+        if (scrolled < window.innerHeight) {
+          heroVideo.style.transform = `scale(1.12) translateY(${scrolled * 0.18}px)`;
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+}
 
-    revealObserver.unobserve(entry.target);
-  });
-}, {
-  threshold: 0.10,
-  rootMargin: '0px 0px -56px 0px'
-});
-
-document.querySelectorAll('[data-reveal]').forEach(el => {
-  revealObserver.observe(el);
-});
-
-// ── Testimonial Carousel ───────────────────────────────────────────
-const carousel = document.querySelector('[data-testimonial-carousel]');
-
-if (carousel) {
-  const slides = Array.from(carousel.querySelectorAll('.testimonial-slide'));
-  const dots   = Array.from(document.querySelectorAll('.testimonial-dot'));
+// Testimonial Slider
+(function() {
+  const slides = document.querySelectorAll('.testimonial-slide');
+  const dots   = document.querySelectorAll('.dot');
   let current  = 0;
   let timer;
 
-  const goTo = (index) => {
+  function goTo(index) {
     slides[current].classList.remove('active');
-    slides[current].classList.add('leaving');
-    setTimeout(() => slides[current < slides.length ? current : 0].classList.remove('leaving'), 650);
-
+    dots[current].classList.remove('active');
     current = index;
     slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
 
-    dots.forEach((d, i) => d.classList.toggle('active', i === current));
-  };
+  function next() {
+    goTo((current + 1) % slides.length);
+  }
 
-  const next = () => goTo((current + 1) % slides.length);
-
-  const startTimer = () => {
-    clearInterval(timer);
+  function startTimer() {
     timer = setInterval(next, 5000);
-  };
+  }
 
-  dots.forEach(dot => {
+  function stopTimer() {
+    clearInterval(timer);
+  }
+
+  dots.forEach((dot, i) => {
     dot.addEventListener('click', () => {
-      goTo(parseInt(dot.dataset.index, 10));
+      stopTimer();
+      goTo(i);
       startTimer();
     });
   });
 
-  startTimer();
-}
+  const slider = document.querySelector('.testimonial-slider');
+  if (slider) {
+    slider.addEventListener('mouseenter', stopTimer);
+    slider.addEventListener('mouseleave', startTimer);
+  }
 
-// ── Init ───────────────────────────────────────────────────────────
-onScroll();
+  startTimer();
+})();
