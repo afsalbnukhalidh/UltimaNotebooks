@@ -144,3 +144,47 @@ if (heroVideo) {
     }
   }, { passive: true });
 }
+
+// Testimonial Slider
+(function() {
+  const slides = document.querySelectorAll('.testimonial-slide');
+  const dots   = document.querySelectorAll('.dot');
+  let current  = 0;
+  let timer;
+
+  function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+
+  function next() {
+    goTo((current + 1) % slides.length);
+  }
+
+  function startTimer() {
+    timer = setInterval(next, 5000);
+  }
+
+  function stopTimer() {
+    clearInterval(timer);
+  }
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      stopTimer();
+      goTo(i);
+      startTimer();
+    });
+  });
+
+  const slider = document.querySelector('.testimonial-slider');
+  if (slider) {
+    slider.addEventListener('mouseenter', stopTimer);
+    slider.addEventListener('mouseleave', startTimer);
+  }
+
+  startTimer();
+})();
