@@ -113,12 +113,13 @@ ul { list-style: none; }
   width: 100%;
 }
 .logo-secondary {
+  margin-left: 0.3rem;
   font-family: 'DM Sans', sans-serif;
   font-size: 0.7rem;
   font-weight: 700;
   color: #E8960C;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.38em;
   display: block;
   transform: scaleX(1.55);
   transform-origin: left center;
