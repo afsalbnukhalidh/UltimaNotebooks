@@ -95,7 +95,7 @@ ul { list-style: none; }
 .btn-outline-enquire:hover { background: var(--ink-navy); color: var(--white); }
 
 /* ── CSS Text Logo ───────────────────────────────────────── */
-.logo { display: flex; flex-direction: column; line-height: 1; text-decoration: none; }
+.logo { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; text-decoration: none; }
 .logo-primary {
   font-family: 'Playfair Display', serif;
   font-weight: 700;
@@ -107,9 +107,12 @@ ul { list-style: none; }
   font-family: 'DM Sans', sans-serif;
   font-size: 1.0rem;
   font-weight: 600;
-  color: var(--gold);
+  color: #E8960C;
   letter-spacing: 0.25em;
   text-transform: uppercase;
+  display: block;
+  text-align: left;
+  margin-left: 0.1rem;
 }
 .logo-light .logo-primary { color: var(--white); }
 
